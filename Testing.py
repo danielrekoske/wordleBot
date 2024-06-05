@@ -6,14 +6,10 @@ class Testing:
 
     def test_bot(self):
         total_attempts = 0
-        counter = 0
-        for answer in self.wordle_game.answers:
-            counter += 1
-            if counter % 100 == 0:
-                print(counter)
+        for answer in self.wordle_game.answers[:100]:
             self.wordle_game.target_word = answer
             bot = WordleBot(self.wordle_game)
             attempts = bot.play()
             total_attempts += attempts
-        average_attempts = total_attempts / len(self.wordle_game.answers)
+        average_attempts = total_attempts / len(self.wordle_game.answers[:100])
         print(f"Average number of attempts: {average_attempts:.2f}")
