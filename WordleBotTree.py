@@ -1,7 +1,6 @@
 from collections import Counter
-import math
 
-class WordleBot:
+class WordleBotTree:
     def __init__(self, wordle_game):
         self.wordle_game = wordle_game
         self.possible_words = wordle_game.answers[:]
@@ -14,27 +13,28 @@ class WordleBot:
     def make_guess(self, previous_guesses):
         if not previous_guesses:
             return self.best_starting_word
+        
+        root = TreeNode(self.possible_words, [])
+        best_guess = self.search_tree(root, 0)
+        return best_guess
 
-        num_possible_answers = len(self.possible_words)
+    def search_tree(self, node, depth):
+        if depth == self.attempts or len(node.possible_words) == 1:
+            return node.possible_words[0]
+        
         best_guess = None
-        highest_score = -1
+        best_score = float('inf')
 
         for guess in self.wordle_game.allowed_guesses:
-            entropy = self.calculate_entropy(guess)
-            probability_correct = 1 / num_possible_answers if guess in self.possible_words else 0
-            score = entropy + probability_correct
+            feedback_counts = Counter(self.wordle_game.get_feedback(guess, word) for word in node.possible_words)
+            branches = [TreeNode([word for word in node.possible_words if self.wordle_game.get_feedback(guess, word) == feedback], node.guesses + [guess]) for feedback in feedback_counts]
+            score = sum(len(branch.possible_words)**2 for branch in branches)
 
-            if score > highest_score:
-                highest_score = score
+            if score < best_score:
+                best_score = score
                 best_guess = guess
 
         return best_guess
-
-    def calculate_entropy(self, guess):
-        feedback_counts = Counter(self.wordle_game.get_feedback(guess, target) for target in self.possible_words)
-        total = sum(feedback_counts.values())
-        entropy = -sum((count / total) * math.log2(count / total) for count in feedback_counts.values() if count > 0)
-        return entropy
 
     def play(self):
         previous_guesses = []
@@ -49,3 +49,8 @@ class WordleBot:
             self.filter_possible_words(guess, feedback)
         print("Sorry, you've used all attempts.")
         return self.attempts + 1
+
+class TreeNode:
+    def __init__(self, possible_words, guesses):
+        self.possible_words = possible_words
+        self.guesses = guesses
